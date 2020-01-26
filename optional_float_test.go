@@ -3,6 +3,7 @@ package gooptional
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -79,12 +80,30 @@ func TestOptionalFloatFilter(t *testing.T) {
 	assert.True(t, OfFloat().Filter(func(float64) bool { return true }).IsEmpty())
 }
 
-func TestOptionalFloatMap(t *testing.T) {
+func TestOptionalFloatMapIntInterfaceString(t *testing.T) {
 	m := func(val float64) float64 {
 		return val + 1
 	}
 	assert.True(t, OfFloat().Map(m).IsEmpty())
 	assert.Equal(t, 2.0, OfFloat(1).Map(m).MustGet())
+
+	toi := func(val float64) int {
+		return int(val + 1)
+	}
+	assert.True(t, OfFloat().MapToInt(toi).IsEmpty())
+	assert.Equal(t, 2, OfFloat(1).MapToInt(toi).MustGet())
+
+	too := func(val float64) interface{} {
+		return val + 1
+	}
+	assert.True(t, OfFloat().MapTo(too).IsEmpty())
+	assert.Equal(t, 2.0, OfFloat(1).MapTo(too).MustGet())
+
+	tos := func(val float64) string {
+		return strconv.FormatFloat(val+1, 'f', -1, 64)
+	}
+	assert.True(t, OfFloat().MapToString(tos).IsEmpty())
+	assert.Equal(t, "2", OfFloat(1).MapToString(tos).MustGet())
 }
 
 func TestOptionalFloatOrElseGetPanic(t *testing.T) {

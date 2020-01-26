@@ -96,8 +96,8 @@ func TestOptionalIntMapInterfaceFloatString(t *testing.T) {
 	too := func(val int) interface{} {
 		return val + 1
 	}
-	assert.True(t, OfInt().MapToOptional(too).IsEmpty())
-	assert.Equal(t, 2, OfInt(1).MapToOptional(too).MustGet())
+	assert.True(t, OfInt().MapTo(too).IsEmpty())
+	assert.Equal(t, 2, OfInt(1).MapTo(too).MustGet())
 
 	tos := func(val int) string {
 		return strconv.Itoa(val + 1)

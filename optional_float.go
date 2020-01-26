@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
+	"reflect"
 )
 
 var (
@@ -98,6 +99,44 @@ func (o OptionalFloat) Map(f func(float64) float64) OptionalFloat {
 	}
 
 	return OptionalFloat{}
+}
+
+// MapTo maps the wrapped value with the given mapping function, which may return a different type.
+// If this optional is not present, the function is not invoked and an empty Optional is returned.
+// If this optional is present and the map function returns a zero value, an empty Optional is returned.
+// Otherwise, an Optional wrapping the mapped value is returned.
+// The mapping function result is determined to be zero by reflect.Value.IsZero().
+func (o OptionalFloat) MapTo(f func(float64) interface{}) Optional {
+	if o.present {
+		v := f(o.value)
+		if !reflect.ValueOf(v).IsZero() {
+			return Of(v)
+		}
+	}
+
+	return Optional{}
+}
+
+// MapToInt the wrapped value to an int with the given mapping function.
+// If this optional is not present, the function is not invoked and an empty OptionalInt is returned.
+// Otherwise, an OptionalInt wrapping the mapped value is returned.
+func (o OptionalFloat) MapToInt(f func(float64) int) OptionalInt {
+	if o.present {
+		return OfInt(f(o.value))
+	}
+
+	return OptionalInt{}
+}
+
+// MapToString the wrapped value to a string with the given mapping function.
+// If this optional is not present, the function is not invoked and an empty OptionalString is returned.
+// Otherwise, an OptionalString wrapping the mapped value is returned.
+func (o OptionalFloat) MapToString(f func(float64) string) OptionalString {
+	if o.present {
+		return OfString(f(o.value))
+	}
+
+	return OptionalString{}
 }
 
 // MustGet returns the unwrapped value and panics if it is not present

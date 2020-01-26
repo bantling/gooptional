@@ -101,6 +101,22 @@ func (o OptionalInt) Map(f func(int) int) OptionalInt {
 	return OptionalInt{}
 }
 
+// MapTo maps the wrapped value with the given mapping function, which may return a different type.
+// If this optional is not present, the function is not invoked and an empty Optional is returned.
+// If this optional is present and the map function returns a zero value, an empty Optional is returned.
+// Otherwise, an Optional wrapping the mapped value is returned.
+// The mapping function result is determined to be zero by reflect.Value.IsZero().
+func (o OptionalInt) MapTo(f func(int) interface{}) Optional {
+	if o.present {
+		v := f(o.value)
+		if !reflect.ValueOf(v).IsZero() {
+			return Of(v)
+		}
+	}
+
+	return Optional{}
+}
+
 // MapToFloat maps the wrapped value to a float64 with the given mapping function.
 // If this optional is not present, the function is not invoked and an empty OptionalFloat is returned.
 // Otherwise, an OptionalFloat wrapping the mapped value is returned.
@@ -110,22 +126,6 @@ func (o OptionalInt) MapToFloat(f func(int) float64) OptionalFloat {
 	}
 
 	return OptionalFloat{}
-}
-
-// MapToOptional maps the wrapped value with the given mapping function, which may return a different type.
-// If this optional is not present, the function is not invoked and an empty Optional is returned.
-// If this optional is present and the map function returns a zero value, an empty Optional is returned.
-// Otherwise, an Optional wrapping the mapped value is returned.
-// The mapping function result is determined to be zero by reflect.Value.IsZero().
-func (o OptionalInt) MapToOptional(f func(int) interface{}) Optional {
-	if o.present {
-		v := f(o.value)
-		if !reflect.ValueOf(v).IsZero() {
-			return Of(v)
-		}
-	}
-
-	return Optional{}
 }
 
 // MapToString the wrapped value to a string with the given mapping function.
