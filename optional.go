@@ -115,7 +115,7 @@ func (o Optional) IsPresent() bool {
 // Map the wrapped value with the given mapping function, which may return a different type.
 // If this optional is not present, the function is not invoked and an empty Optional is returned.
 // If this optional is present and the map function returns a zero value, an empty Optional is returned.
-// Otherwise, a new Optional wrapping the mapped value is returned.
+// Otherwise, an Optional wrapping the mapped value is returned.
 // The mapping function result is determined to be zero by reflect.Value.IsZero().
 func (o Optional) Map(f func(interface{}) interface{}) Optional {
 	if o.present {
@@ -126,6 +126,39 @@ func (o Optional) Map(f func(interface{}) interface{}) Optional {
 	}
 
 	return Optional{}
+}
+
+// MapToFloat maps the wrapped value to a float64 with the given mapping function.
+// If this optional is not present, the function is not invoked and an empty OptionalFloat is returned.
+// Otherwise, an OptionalFloat wrapping the mapped value is returned.
+func (o Optional) MapToFloat(f func(interface{}) float64) OptionalFloat {
+	if o.present {
+		return OfFloat(f(o.value))
+	}
+
+	return OptionalFloat{}
+}
+
+// MapToInt the wrapped value to an int with the given mapping function.
+// If this optional is not present, the function is not invoked and an empty OptionalInt is returned.
+// Otherwise, an OptionalInt wrapping the mapped value is returned.
+func (o Optional) MapToInt(f func(interface{}) int) OptionalInt {
+	if o.present {
+		return OfInt(f(o.value))
+	}
+
+	return OptionalInt{}
+}
+
+// MapToString the wrapped value to a string with the given mapping function.
+// If this optional is not present, the function is not invoked and an empty OptionalString is returned.
+// Otherwise, an OptionalString wrapping the mapped value is returned.
+func (o Optional) MapToString(f func(interface{}) string) OptionalString {
+	if o.present {
+		return OfString(f(o.value))
+	}
+
+	return OptionalString{}
 }
 
 // MustGet returns the unwrapped value and panics if it is not present

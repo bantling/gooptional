@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
+	"reflect"
 )
 
 var (
@@ -17,7 +18,7 @@ type OptionalInt struct {
 	present bool
 }
 
-// Of returns an Optional.
+// OfInt returns an OptionalInt.
 // If no value is provided, an empty OptionalInt is returned.
 // Otherwise a new OptionalInt that wraps the value is returned.
 func OfInt(value ...int) OptionalInt {
@@ -98,6 +99,44 @@ func (o OptionalInt) Map(f func(int) int) OptionalInt {
 	}
 
 	return OptionalInt{}
+}
+
+// MapToFloat maps the wrapped value to a float64 with the given mapping function.
+// If this optional is not present, the function is not invoked and an empty OptionalFloat is returned.
+// Otherwise, an OptionalFloat wrapping the mapped value is returned.
+func (o OptionalInt) MapToFloat(f func(int) float64) OptionalFloat {
+	if o.present {
+		return OfFloat(f(o.value))
+	}
+
+	return OptionalFloat{}
+}
+
+// MapToOptional maps the wrapped value with the given mapping function, which may return a different type.
+// If this optional is not present, the function is not invoked and an empty Optional is returned.
+// If this optional is present and the map function returns a zero value, an empty Optional is returned.
+// Otherwise, an Optional wrapping the mapped value is returned.
+// The mapping function result is determined to be zero by reflect.Value.IsZero().
+func (o OptionalInt) MapToOptional(f func(int) interface{}) Optional {
+	if o.present {
+		v := f(o.value)
+		if !reflect.ValueOf(v).IsZero() {
+			return Of(v)
+		}
+	}
+
+	return Optional{}
+}
+
+// MapToString the wrapped value to a string with the given mapping function.
+// If this optional is not present, the function is not invoked and an empty OptionalString is returned.
+// Otherwise, an OptionalString wrapping the mapped value is returned.
+func (o OptionalInt) MapToString(f func(int) string) OptionalString {
+	if o.present {
+		return OfString(f(o.value))
+	}
+
+	return OptionalString{}
 }
 
 // MustGet returns the unwrapped value and panics if it is not present

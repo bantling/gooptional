@@ -3,6 +3,7 @@ package gooptional
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -96,12 +97,30 @@ func TestOptionalFilter(t *testing.T) {
 	assert.True(t, Of().Filter(func(interface{}) bool { return true }).IsEmpty())
 }
 
-func TestOptionalMap(t *testing.T) {
-	m := func(val interface{}) interface{} {
+func TestOptionalMapFloatIntString(t *testing.T) {
+	too := func(val interface{}) interface{} {
 		return val.(int) + 1
 	}
-	assert.True(t, Of().Map(m).IsEmpty())
-	assert.Equal(t, 2, Of(1).Map(m).MustGet())
+	assert.True(t, Of().Map(too).IsEmpty())
+	assert.Equal(t, 2, Of(1).Map(too).MustGet())
+
+	tof := func(val interface{}) float64 {
+		return float64(val.(int) + 1)
+	}
+	assert.True(t, Of().MapToFloat(tof).IsEmpty())
+	assert.Equal(t, 2.0, Of(1).MapToFloat(tof).MustGet())
+
+	toi := func(val interface{}) int {
+		return val.(int) + 1
+	}
+	assert.True(t, Of().MapToInt(toi).IsEmpty())
+	assert.Equal(t, 2, Of(1).MapToInt(toi).MustGet())
+
+	tos := func(val interface{}) string {
+		return strconv.Itoa(val.(int) + 1)
+	}
+	assert.True(t, Of().MapToString(tos).IsEmpty())
+	assert.Equal(t, "2", Of(1).MapToString(tos).MustGet())
 }
 
 func TestOptionalOrElseGetPanic(t *testing.T) {
