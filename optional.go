@@ -8,6 +8,7 @@ import (
 
 // Optional is a mostly immutable generic wrapper for any kind of value with a present flag.
 // The only mutable operation is the implementation of the sql.Scanner interface.
+// The zero value is ready to use.
 type Optional struct {
 	value   interface{}
 	present bool

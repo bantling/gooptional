@@ -58,6 +58,24 @@ func TestOptionalOfEmptyPresentGet(t *testing.T) {
 	opt = Of("")
 	assert.Equal(t, "", opt.value)
 	assert.True(t, opt.present)
+	
+	// Test zero value
+	var zval Optional
+	assert.Nil(t, zval.value)
+	assert.False(t, zval.present)
+	assert.True(t, zval.IsEmpty())
+	assert.False(t, zval.IsPresent())
+	called := false
+	zval.IfPresent(func(interface{}) { called = true })
+	assert.False(t, called)
+	func() {
+		defer func() {
+			assert.True(t, notPresentError == recover())
+		}()
+
+		zval.MustGet()
+		assert.Fail(t, "Expected Panic")
+	}()
 }
 
 func TestOptionalEqual(t *testing.T) {
