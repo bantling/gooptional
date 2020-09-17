@@ -18,6 +18,11 @@ func TestOptionalFloatOfEmptyPresentGet(t *testing.T) {
 	called := false
 	opt.IfPresent(func(float64) { called = true })
 	assert.False(t, called)
+	opt.IfEmpty(func() { called = true })
+	assert.True(t, called)
+	called = false
+	opt.IfPresentOrElse(func(float64) { }, func() { called = true })
+	assert.True(t, called)
 
 	func() {
 		defer func() {
@@ -28,7 +33,7 @@ func TestOptionalFloatOfEmptyPresentGet(t *testing.T) {
 		assert.Fail(t, "Expected Panic")
 	}()
 
-	opt = OfFloat(0)
+	opt = OfFloat(0.0)
 	assert.Equal(t, 0.0, opt.value)
 	assert.True(t, opt.present)
 	assert.False(t, opt.IsEmpty())
@@ -36,6 +41,12 @@ func TestOptionalFloatOfEmptyPresentGet(t *testing.T) {
 	val := 1.0
 	opt.IfPresent(func(v float64) { val = v })
 	assert.Equal(t, 0.0, val)
+	val = 1.0
+	opt.IfEmpty(func() { val = 0.0 })
+	assert.Equal(t, 1.0, val)
+	val = 1.0
+	opt.IfPresentOrElse(func(v float64) { val = 2.0 }, func() { val = 3.0 })
+	assert.Equal(t, 2.0, val)
 
 	val, valid := opt.Get()
 	assert.Equal(t, 0.0, val)
@@ -72,12 +83,75 @@ func TestOptionalFloatEqual(t *testing.T) {
 	assert.False(t, opt1.Equal(OfFloat(1)))
 }
 
+func TestOptionalFloatNotEqual(t *testing.T) {
+	// Not present optional == not present optional
+	assert.False(t, OfFloat().NotEqual(OfFloat()))
+
+	opt1 := OfFloat(0)
+	opt2 := OfFloat(0)
+	// Present optional != not present optional
+	assert.True(t, opt1.NotEqual(OfFloat()))
+
+	// Present optional == present optional if values equal
+	assert.False(t, opt1.NotEqual(opt1))
+	assert.False(t, opt1.NotEqual(opt2))
+
+	// Present optional != present optional if values differ
+	assert.True(t, opt1.NotEqual(OfFloat(1)))
+
+	// Not present optional never equals any value
+	assert.True(t, OfFloat().NotEqualValue(0))
+
+	// Not present optional != non-nil value
+	assert.True(t, OfFloat().NotEqualValue(0))
+
+	// Present optional == value if values equal
+	assert.False(t, opt1.NotEqualValue(0))
+
+	// Present optional != value if values differ
+	assert.True(t, opt1.NotEqual(OfFloat(1)))
+}
+
 func TestOptionalFloatFilter(t *testing.T) {
 	opt := OfFloat(1)
 	assert.True(t, opt == opt.Filter(func(val float64) bool { return true }))
 	assert.True(t, opt.Filter(func(float64) bool { return false }).IsEmpty())
 
 	assert.True(t, OfFloat().Filter(func(float64) bool { return true }).IsEmpty())
+}
+
+func TestOptionalFloatFilterNot(t *testing.T) {
+	opt := OfFloat(1)
+	assert.True(t, opt == opt.FilterNot(func(val float64) bool { return false }))
+	assert.True(t, opt.FilterNot(func(float64) bool { return true }).IsEmpty())
+
+	assert.True(t, OfFloat().FilterNot(func(float64) bool { return false }).IsEmpty())
+}
+
+func TestOptionalFloatFlatMapIntInterfaceString(t *testing.T) {
+	m := func(val float64) OptionalFloat {
+		return OfFloat(val + 1)
+	}
+	assert.True(t, OfFloat().FlatMap(m).IsEmpty())
+	assert.Equal(t, 2.0, OfFloat(1).FlatMap(m).MustGet())
+
+	toi := func(val float64) OptionalInt {
+		return OfInt(int(val + 1))
+	}
+	assert.True(t, OfFloat().FlatMapToInt(toi).IsEmpty())
+	assert.Equal(t, 2, OfFloat(1).FlatMapToInt(toi).MustGet())
+
+	too := func(val float64) Optional {
+		return Of(val + 1)
+	}
+	assert.True(t, OfFloat().FlatMapTo(too).IsEmpty())
+	assert.Equal(t, 2.0, OfFloat(1).FlatMapTo(too).MustGet())
+
+	tos := func(val float64) OptionalString {
+		return OfString(strconv.FormatFloat(val+1, 'f', -1, 64))
+	}
+	assert.True(t, OfFloat().FlatMapToString(tos).IsEmpty())
+	assert.Equal(t, "2", OfFloat(1).FlatMapToString(tos).MustGet())
 }
 
 func TestOptionalFloatMapIntInterfaceString(t *testing.T) {

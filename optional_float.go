@@ -47,6 +47,19 @@ func (o OptionalFloat) Equal(opt OptionalFloat) bool {
 	return o.value == opt.value
 }
 
+// NotEqual returns the opposite of Equal
+func (o OptionalFloat) NotEqual(opt OptionalFloat) bool {
+	if !o.present {
+		return opt.present
+	}
+
+	if !opt.present {
+		return true
+	}
+
+	return o.value != opt.value
+}
+
 // EqualValue returns true if this OptionalFloat is present and contains the value passed
 func (o OptionalFloat) EqualValue(val float64) bool {
 	if !o.present {
@@ -56,11 +69,31 @@ func (o OptionalFloat) EqualValue(val float64) bool {
 	return o.value == val
 }
 
+// NotEqualValue returns the opposite of EqualValue
+func (o OptionalFloat) NotEqualValue(val float64) bool {
+	if !o.present {
+		return true
+	}
+
+	return o.value != val
+}
+
 // Filter applies the predicate to the value of this OptionalFloat.
 // Returns this OptionalFloat only if this OptionalFloat is present and the filter returns true for the value.
 // Otherwise an empty OptionalFloat is returned.
 func (o OptionalFloat) Filter(predicate func(float64) bool) OptionalFloat {
 	if o.present && predicate(o.value) {
+		return o
+	}
+
+	return OptionalFloat{}
+}
+
+// FilterNot applies the inverted predicate to the value of this OptionalFloat.
+// Returns this OptionalFloat only if this OptionalFloat is present and the filter returns false for the value.
+// Otherwise an empty OptionalFloat is returned.
+func (o OptionalFloat) FilterNot(predicate func(float64) bool) OptionalFloat {
+	if o.present && (!predicate(o.value)) {
 		return o
 	}
 
@@ -80,6 +113,22 @@ func (o OptionalFloat) IfPresent(consumer func(float64)) {
 	}
 }
 
+// IfEmpty executes the function only if the value is not present.
+func (o OptionalFloat) IfEmpty(f func()) {
+	if !o.present {
+		f()
+	}
+}
+
+// IfPresentOrElse executes the consumer function with the wrapped value if the value is present, otherwise executes the function of no args.
+func (o OptionalFloat) IfPresentOrElse(consumer func(float64), f func()) {
+	if o.present {
+		consumer(o.value)
+	} else {
+		f()
+	}
+}
+
 // Empty returns true if this OptionalFloat is not present
 func (o OptionalFloat) IsEmpty() bool {
 	return !o.present
@@ -88,6 +137,15 @@ func (o OptionalFloat) IsEmpty() bool {
 // Present returns true if this OptionalFloat is present
 func (o OptionalFloat) IsPresent() bool {
 	return o.present
+}
+
+// FlatMap operates like Map, except that the mapping function already returns an OptionalFloat, which is returned as is.
+func (o OptionalFloat) FlatMap(f func(float64) OptionalFloat) OptionalFloat {
+	if o.present {
+		return f(o.value)
+	}
+
+	return OptionalFloat{}
 }
 
 // Map the wrapped value with the given mapping function, which must return the same type.
@@ -99,6 +157,15 @@ func (o OptionalFloat) Map(f func(float64) float64) OptionalFloat {
 	}
 
 	return OptionalFloat{}
+}
+
+// FlatMapTo operates like MapTo, except that the mapping function already returns an Optional, which is returned as is.
+func (o OptionalFloat) FlatMapTo(f func(float64) Optional) Optional {
+	if o.present {
+		return f(o.value)
+	}
+
+	return Optional{}
 }
 
 // MapTo maps the wrapped value with the given mapping function, which may return a different type.
@@ -117,6 +184,15 @@ func (o OptionalFloat) MapTo(f func(float64) interface{}) Optional {
 	return Optional{}
 }
 
+// FlatMapToInt operates like MapToInt, except that the mapping function already returns an OptionalInt, which is returned as is.
+func (o OptionalFloat) FlatMapToInt(f func(float64) OptionalInt) OptionalInt {
+	if o.present {
+		return f(o.value)
+	}
+
+	return OptionalInt{}
+}
+
 // MapToInt the wrapped value to an int with the given mapping function.
 // If this optional is not present, the function is not invoked and an empty OptionalInt is returned.
 // Otherwise, an OptionalInt wrapping the mapped value is returned.
@@ -126,6 +202,15 @@ func (o OptionalFloat) MapToInt(f func(float64) int) OptionalInt {
 	}
 
 	return OptionalInt{}
+}
+
+// FlatMapToString operates like MapToString, except that the mapping function already returns an OptionalString, which is returned as is.
+func (o OptionalFloat) FlatMapToString(f func(float64) OptionalString) OptionalString {
+	if o.present {
+		return f(o.value)
+	}
+
+	return OptionalString{}
 }
 
 // MapToString the wrapped value to a string with the given mapping function.

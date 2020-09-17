@@ -56,7 +56,7 @@ func Of(value ...interface{}) Optional {
 
 // Equal returns true if:
 // 1. This Optional is empty and the Optional passed is empty.
-// 2. This OptionalInt is present and the OptionalInt passed is present and contains the same value using reflect.DeepEqual.
+// 2. This Optional is present and the Optional passed is present and contains the same value using reflect.DeepEqual.
 func (o Optional) Equal(opt Optional) bool {
 	if !o.present {
 		return !opt.present
@@ -69,6 +69,19 @@ func (o Optional) Equal(opt Optional) bool {
 	return reflect.DeepEqual(o.value, opt.value)
 }
 
+// NotEqual returns the opposite of Equal
+func (o Optional) NotEqual(opt Optional) bool {
+	if !o.present {
+		return opt.present
+	}
+
+	if !opt.present {
+		return true
+	}
+
+	return !reflect.DeepEqual(o.value, opt.value)
+}
+
 // EqualValue returns true if this Optional is present and contains the value passed.
 // Note that an empty Optional never equals any value, including nil.
 func (o Optional) EqualValue(val interface{}) bool {
@@ -79,11 +92,31 @@ func (o Optional) EqualValue(val interface{}) bool {
 	return reflect.DeepEqual(o.value, val)
 }
 
+// NotEqualValue returns the opposite of EqualValue
+func (o Optional) NotEqualValue(val interface{}) bool {
+	if !o.present {
+		return true
+	}
+
+	return !reflect.DeepEqual(o.value, val)
+}
+
 // Filter applies the predicate to the value of this Optional.
 // Returns this Optional only if this Optional is present and the filter returns true for the value.
 // Otherwise an empty Optional is returned.
 func (o Optional) Filter(predicate func(interface{}) bool) Optional {
 	if o.present && predicate(o.value) {
+		return o
+	}
+
+	return Optional{}
+}
+
+// FilterNot applies the inverted predicate to the value of this Optional.
+// Returns this Optional only if this Optional is present and the filter returns false for the value.
+// Otherwise an empty Optional is returned.
+func (o Optional) FilterNot(predicate func(interface{}) bool) Optional {
+	if o.present && (!predicate(o.value)) {
 		return o
 	}
 
@@ -103,6 +136,22 @@ func (o Optional) IfPresent(consumer func(interface{})) {
 	}
 }
 
+// IfEmpty executes the function only if the value is not present.
+func (o Optional) IfEmpty(f func()) {
+	if !o.present {
+		f()
+	}
+}
+
+// IfPresentOrElse executes the consumer function with the wrapped value if the value is present, otherwise executes the function of no args.
+func (o Optional) IfPresentOrElse(consumer func(interface{}), f func()) {
+	if o.present {
+		consumer(o.value)
+	} else {
+		f()
+	}
+}
+
 // Empty returns true if this Optional is not present
 func (o Optional) IsEmpty() bool {
 	return !o.present
@@ -111,6 +160,15 @@ func (o Optional) IsEmpty() bool {
 // Present returns true if this Optional is present
 func (o Optional) IsPresent() bool {
 	return o.present
+}
+
+// FlatMap operates like Map, except that the mapping function already returns an Optional, which is returned as is.
+func (o Optional) FlatMap(f func(interface{}) Optional) Optional {
+	if o.present {
+		return f(o.value)
+	}
+
+	return Optional{}
 }
 
 // Map the wrapped value with the given mapping function, which may return a different type.
@@ -129,6 +187,15 @@ func (o Optional) Map(f func(interface{}) interface{}) Optional {
 	return Optional{}
 }
 
+// FlatMapToFloat operates like MapToFloat, except that the mapping function already returns an OptionalFloat, which is returned as is.
+func (o Optional) FlatMapToFloat(f func(interface{}) OptionalFloat) OptionalFloat {
+	if o.present {
+		return f(o.value)
+	}
+
+	return OptionalFloat{}
+}
+
 // MapToFloat maps the wrapped value to a float64 with the given mapping function.
 // If this optional is not present, the function is not invoked and an empty OptionalFloat is returned.
 // Otherwise, an OptionalFloat wrapping the mapped value is returned.
@@ -140,6 +207,15 @@ func (o Optional) MapToFloat(f func(interface{}) float64) OptionalFloat {
 	return OptionalFloat{}
 }
 
+// FlatMapToInt operates like MapToInt, except that the mapping function already returns an OptionalInt, which is returned as is.
+func (o Optional) FlatMapToInt(f func(interface{}) OptionalInt) OptionalInt {
+	if o.present {
+		return f(o.value)
+	}
+
+	return OptionalInt{}
+}
+
 // MapToInt the wrapped value to an int with the given mapping function.
 // If this optional is not present, the function is not invoked and an empty OptionalInt is returned.
 // Otherwise, an OptionalInt wrapping the mapped value is returned.
@@ -149,6 +225,15 @@ func (o Optional) MapToInt(f func(interface{}) int) OptionalInt {
 	}
 
 	return OptionalInt{}
+}
+
+// FlatMapToString operates like MapToString, except that the mapping function already returns an OptionalString, which is returned as is.
+func (o Optional) FlatMapToString(f func(interface{}) OptionalString) OptionalString {
+	if o.present {
+		return f(o.value)
+	}
+
+	return OptionalString{}
 }
 
 // MapToString the wrapped value to a string with the given mapping function.

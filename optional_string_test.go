@@ -18,6 +18,11 @@ func TestOptionalStringOfEmptyPresentGet(t *testing.T) {
 	called := false
 	opt.IfPresent(func(string) { called = true })
 	assert.False(t, called)
+	opt.IfEmpty(func() { called = true })
+	assert.True(t, called)
+	called = false
+	opt.IfPresentOrElse(func(string) { }, func() { called = true })
+	assert.True(t, called)
 
 	func() {
 		defer func() {
@@ -36,6 +41,12 @@ func TestOptionalStringOfEmptyPresentGet(t *testing.T) {
 	val := "1"
 	opt.IfPresent(func(v string) { val = v })
 	assert.Equal(t, "0", val)
+	val = "1"
+	opt.IfEmpty(func() { val = "0" })
+	assert.Equal(t, "1", val)
+	val = "1"
+	opt.IfPresentOrElse(func(v string) { val = "2" }, func() { val = "3" })
+	assert.Equal(t, "2", val)
 
 	val, valid := opt.Get()
 	assert.Equal(t, "0", val)
@@ -72,12 +83,77 @@ func TestOptionalStringEqual(t *testing.T) {
 	assert.False(t, opt1.Equal(OfString("1")))
 }
 
+func TestOptionalStringNotEqual(t *testing.T) {
+	// Not present optional == not present optional
+	assert.False(t, OfString().NotEqual(OfString()))
+
+	opt1 := OfString("0")
+	opt2 := OfString("0")
+	// Present optional != not present optional
+	assert.True(t, opt1.NotEqual(OfString()))
+
+	// Present optional == present optional if values equal
+	assert.False(t, opt1.NotEqual(opt1))
+	assert.False(t, opt1.NotEqual(opt2))
+
+	// Present optional != present optional if values differ
+	assert.True(t, opt1.NotEqual(OfString("1")))
+
+	// Not present optional never equals any value
+	assert.True(t, OfString().NotEqualValue("0"))
+
+	// Not present optional != non-nil value
+	assert.True(t, OfString().NotEqualValue("0"))
+
+	// Present optional == value if values equal
+	assert.False(t, opt1.NotEqualValue("0"))
+
+	// Present optional != value if values differ
+	assert.True(t, opt1.NotEqual(OfString("1")))
+}
+
 func TestOptionalStringFilter(t *testing.T) {
 	opt := OfString("1")
 	assert.True(t, opt == opt.Filter(func(val string) bool { return true }))
 	assert.True(t, opt.Filter(func(string) bool { return false }).IsEmpty())
 
 	assert.True(t, OfString().Filter(func(string) bool { return true }).IsEmpty())
+}
+
+func TestOptionalStringFilterNot(t *testing.T) {
+	opt := OfString("1")
+	assert.True(t, opt == opt.FilterNot(func(val string) bool { return false }))
+	assert.True(t, opt.FilterNot(func(string) bool { return true }).IsEmpty())
+
+	assert.True(t, OfString().FilterNot(func(string) bool { return false }).IsEmpty())
+}
+
+func TestOptionalStringFlatMapFloatIntInterface(t *testing.T) {
+	m := func(val string) OptionalString {
+		return OfString(val + "1")
+	}
+	assert.True(t, OfString().FlatMap(m).IsEmpty())
+	assert.Equal(t, "11", OfString("1").FlatMap(m).MustGet())
+
+	too := func(val string) Optional {
+		return Of(val + "1")
+	}
+	assert.True(t, OfString().FlatMapTo(too).IsEmpty())
+	assert.Equal(t, "11", OfString("1").FlatMapTo(too).MustGet())
+
+	tof := func(val string) OptionalFloat {
+		v, _ := strconv.ParseFloat(val+"1", 64)
+		return OfFloat(v)
+	}
+	assert.True(t, OfString().FlatMapToFloat(tof).IsEmpty())
+	assert.Equal(t, 11.0, OfString("1").FlatMapToFloat(tof).MustGet())
+
+	toi := func(val string) OptionalInt {
+		v, _ := strconv.Atoi(val + "1")
+		return OfInt(v)
+	}
+	assert.True(t, OfString().FlatMapToInt(toi).IsEmpty())
+	assert.Equal(t, 11, OfString("1").FlatMapToInt(toi).MustGet())
 }
 
 func TestOptionalStringMapFloatIntInterface(t *testing.T) {
