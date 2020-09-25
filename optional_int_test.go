@@ -21,12 +21,12 @@ func TestOptionalIntOfEmptyPresentGet(t *testing.T) {
 	opt.IfEmpty(func() { called = true })
 	assert.True(t, called)
 	called = false
-	opt.IfPresentOrElse(func(int) { }, func() { called = true })
+	opt.IfPresentOrElse(func(int) {}, func() { called = true })
 	assert.True(t, called)
 
 	func() {
 		defer func() {
-			assert.True(t, notPresentError == recover())
+			assert.True(t, errNotPresent == recover())
 		}()
 
 		opt.MustGet()
@@ -52,6 +52,18 @@ func TestOptionalIntOfEmptyPresentGet(t *testing.T) {
 	assert.Equal(t, 0, val)
 	assert.True(t, valid)
 	assert.Equal(t, 0, opt.MustGet())
+}
+
+func TestOptionalIntIter(t *testing.T) {
+	var opt OptionalInt
+	iter := opt.Iter()
+	assert.False(t, iter.Next())
+
+	opt = OfInt(1)
+	iter = opt.Iter()
+	assert.True(t, iter.Next())
+	assert.Equal(t, 1, iter.Value())
+	assert.False(t, iter.Next())
 }
 
 func TestOptionalIntEqual(t *testing.T) {
@@ -178,7 +190,6 @@ func TestOptionalIntMapInterfaceFloatString(t *testing.T) {
 	}
 	assert.True(t, OfInt().MapToString(tos).IsEmpty())
 	assert.Equal(t, "2", OfInt(1).MapToString(tos).MustGet())
-
 }
 
 func TestOptionalIntOrElseGetPanic(t *testing.T) {

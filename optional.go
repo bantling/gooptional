@@ -4,6 +4,8 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"reflect"
+
+	"github.com/bantling/goiter"
 )
 
 // Optional is a mostly immutable generic wrapper for any kind of value with a present flag.
@@ -15,8 +17,8 @@ type Optional struct {
 }
 
 var (
-	notPresentError = fmt.Errorf("No value present")
-	emptyString     = "Optional"
+	errNotPresent = fmt.Errorf("No value present")
+	emptyString   = "Optional"
 )
 
 // IsNil returns true if a value is nil.
@@ -152,14 +154,23 @@ func (o Optional) IfPresentOrElse(consumer func(interface{}), f func()) {
 	}
 }
 
-// Empty returns true if this Optional is not present
+// IsEmpty returns true if this Optional is not present
 func (o Optional) IsEmpty() bool {
 	return !o.present
 }
 
-// Present returns true if this Optional is present
+// IsPresent returns true if this Optional is present
 func (o Optional) IsPresent() bool {
 	return o.present
+}
+
+// Iter returns an *Iter of one element containing the wrapped value if present, else an empty Iter
+func (o Optional) Iter() *goiter.Iter {
+	if o.present {
+		return goiter.Of(o.value)
+	}
+
+	return goiter.Of()
 }
 
 // FlatMap operates like Map, except that the mapping function already returns an Optional, which is returned as is.
@@ -250,7 +261,7 @@ func (o Optional) MapToString(f func(interface{}) string) OptionalString {
 // MustGet returns the unwrapped value and panics if it is not present
 func (o Optional) MustGet() interface{} {
 	if !o.present {
-		panic(notPresentError)
+		panic(errNotPresent)
 	}
 
 	return o.value
@@ -299,15 +310,6 @@ func (o *Optional) Scan(src interface{}) error {
 	return nil
 }
 
-// String returns fmt.Sprintf("Optional (%v)", wrapped value) if it is present, else "Optional" if it is empty.
-func (o Optional) String() string {
-	if o.present {
-		return fmt.Sprintf("Optional (%v)", o.value)
-	}
-
-	return emptyString
-}
-
 // Value is the database/sql/driver/Valuer interface, allowing users to write an Optional into a column.
 // If a present optional does not contain an allowed type, the operation will fail.
 // It is up to the caller to ensure the correct type is being written.
@@ -317,4 +319,13 @@ func (o Optional) Value() (driver.Value, error) {
 	}
 
 	return o.value, nil
+}
+
+// String returns fmt.Sprintf("Optional (%v)", wrapped value) if it is present, else "Optional" if it is empty.
+func (o Optional) String() string {
+	if o.present {
+		return fmt.Sprintf("Optional (%v)", o.value)
+	}
+
+	return emptyString
 }

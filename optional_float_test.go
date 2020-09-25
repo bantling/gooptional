@@ -21,12 +21,12 @@ func TestOptionalFloatOfEmptyPresentGet(t *testing.T) {
 	opt.IfEmpty(func() { called = true })
 	assert.True(t, called)
 	called = false
-	opt.IfPresentOrElse(func(float64) { }, func() { called = true })
+	opt.IfPresentOrElse(func(float64) {}, func() { called = true })
 	assert.True(t, called)
 
 	func() {
 		defer func() {
-			assert.True(t, notPresentError == recover())
+			assert.True(t, errNotPresent == recover())
 		}()
 
 		opt.MustGet()
@@ -52,6 +52,18 @@ func TestOptionalFloatOfEmptyPresentGet(t *testing.T) {
 	assert.Equal(t, 0.0, val)
 	assert.True(t, valid)
 	assert.Equal(t, 0.0, opt.MustGet())
+}
+
+func TestOptionalFloatIter(t *testing.T) {
+	var opt OptionalFloat
+	iter := opt.Iter()
+	assert.False(t, iter.Next())
+
+	opt = OfFloat(1.25)
+	iter = opt.Iter()
+	assert.True(t, iter.Next())
+	assert.Equal(t, 1.25, iter.Value())
+	assert.False(t, iter.Next())
 }
 
 func TestOptionalFloatEqual(t *testing.T) {

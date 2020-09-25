@@ -21,12 +21,12 @@ func TestOptionalStringOfEmptyPresentGet(t *testing.T) {
 	opt.IfEmpty(func() { called = true })
 	assert.True(t, called)
 	called = false
-	opt.IfPresentOrElse(func(string) { }, func() { called = true })
+	opt.IfPresentOrElse(func(string) {}, func() { called = true })
 	assert.True(t, called)
 
 	func() {
 		defer func() {
-			assert.True(t, notPresentError == recover())
+			assert.True(t, errNotPresent == recover())
 		}()
 
 		opt.MustGet()
@@ -52,6 +52,18 @@ func TestOptionalStringOfEmptyPresentGet(t *testing.T) {
 	assert.Equal(t, "0", val)
 	assert.True(t, valid)
 	assert.Equal(t, "0", opt.MustGet())
+}
+
+func TestOptionalStringIter(t *testing.T) {
+	var opt OptionalString
+	iter := opt.Iter()
+	assert.False(t, iter.Next())
+
+	opt = OfString("a")
+	iter = opt.Iter()
+	assert.True(t, iter.Next())
+	assert.Equal(t, "a", iter.Value())
+	assert.False(t, iter.Next())
 }
 
 func TestOptionalStringEqual(t *testing.T) {

@@ -1,3 +1,2 @@
-///////////////////////////////////////////////////////////////////////////////
-// gooptional is a simplistic port of Java Optional types
+// Package gooptional is similar to Java Optional types
 package gooptional

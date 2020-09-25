@@ -5,6 +5,8 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"reflect"
+
+	"github.com/bantling/goiter"
 )
 
 var (
@@ -129,14 +131,23 @@ func (o OptionalString) IfPresentOrElse(consumer func(string), f func()) {
 	}
 }
 
-// Empty returns true if this OptionalString is not present
+// IsEmpty returns true if this OptionalString is not present
 func (o OptionalString) IsEmpty() bool {
 	return !o.present
 }
 
-// Present returns true if this OptionalString is present
+// IsPresent returns true if this OptionalString is present
 func (o OptionalString) IsPresent() bool {
 	return o.present
+}
+
+// Iter returns an *Iter of one element containing the wrapped value if present, else an empty Iter
+func (o OptionalString) Iter() *goiter.Iter {
+	if o.present {
+		return goiter.Of(o.value)
+	}
+
+	return goiter.Of()
 }
 
 // FlatMap operates like Map, except that the mapping function already returns an OptionalString, which is returned as is.
@@ -227,7 +238,7 @@ func (o OptionalString) MapToInt(f func(string) int) OptionalInt {
 // MustGet returns the unwrapped value and panics if it is not present
 func (o OptionalString) MustGet() string {
 	if !o.present {
-		panic(notPresentError)
+		panic(errNotPresent)
 	}
 
 	return o.value
@@ -275,15 +286,6 @@ func (o *OptionalString) Scan(src interface{}) error {
 	return nil
 }
 
-// String returns fmt.Sprintf("OptionalString (%v)", wrapped value) if it is present, else "OptionalString" if it is empty.
-func (o OptionalString) String() string {
-	if o.present {
-		return fmt.Sprintf("OptionalString (%v)", o.value)
-	}
-
-	return emptyStringString
-}
-
 // Value is the database/sql/driver/Valuer stringerface, allowing users to write an OptionalString stringo a column.
 func (o OptionalString) Value() (driver.Value, error) {
 	if !o.present {
@@ -291,4 +293,13 @@ func (o OptionalString) Value() (driver.Value, error) {
 	}
 
 	return o.value, nil
+}
+
+// String returns fmt.Sprintf("OptionalString (%v)", wrapped value) if it is present, else "OptionalString" if it is empty.
+func (o OptionalString) String() string {
+	if o.present {
+		return fmt.Sprintf("OptionalString (%v)", o.value)
+	}
+
+	return emptyStringString
 }

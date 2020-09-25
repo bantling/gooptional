@@ -5,6 +5,8 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"reflect"
+
+	"github.com/bantling/goiter"
 )
 
 var (
@@ -129,14 +131,23 @@ func (o OptionalFloat) IfPresentOrElse(consumer func(float64), f func()) {
 	}
 }
 
-// Empty returns true if this OptionalFloat is not present
+// IsEmpty returns true if this OptionalFloat is not present
 func (o OptionalFloat) IsEmpty() bool {
 	return !o.present
 }
 
-// Present returns true if this OptionalFloat is present
+// IsPresent returns true if this OptionalFloat is present
 func (o OptionalFloat) IsPresent() bool {
 	return o.present
+}
+
+// Iter returns an *Iter of one element containing the wrapped value if present, else an empty Iter
+func (o OptionalFloat) Iter() *goiter.Iter {
+	if o.present {
+		return goiter.Of(o.value)
+	}
+
+	return goiter.Of()
 }
 
 // FlatMap operates like Map, except that the mapping function already returns an OptionalFloat, which is returned as is.
@@ -227,7 +238,7 @@ func (o OptionalFloat) MapToString(f func(float64) string) OptionalString {
 // MustGet returns the unwrapped value and panics if it is not present
 func (o OptionalFloat) MustGet() float64 {
 	if !o.present {
-		panic(notPresentError)
+		panic(errNotPresent)
 	}
 
 	return o.value
@@ -275,15 +286,6 @@ func (o *OptionalFloat) Scan(src interface{}) error {
 	return nil
 }
 
-// String returns fmt.Sprintf("OptionalFloat (%v)", wrapped value) if it is present, else "OptionalFloat" if it is empty.
-func (o OptionalFloat) String() string {
-	if o.present {
-		return fmt.Sprintf("OptionalFloat (%v)", o.value)
-	}
-
-	return emptyFloatString
-}
-
 // Value is the database/sql/driver/Valuer float64erface, allowing users to write an OptionalFloat float64o a column.
 func (o OptionalFloat) Value() (driver.Value, error) {
 	if !o.present {
@@ -291,4 +293,13 @@ func (o OptionalFloat) Value() (driver.Value, error) {
 	}
 
 	return o.value, nil
+}
+
+// String returns fmt.Sprintf("OptionalFloat (%v)", wrapped value) if it is present, else "OptionalFloat" if it is empty.
+func (o OptionalFloat) String() string {
+	if o.present {
+		return fmt.Sprintf("OptionalFloat (%v)", o.value)
+	}
+
+	return emptyFloatString
 }

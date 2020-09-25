@@ -5,6 +5,8 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"reflect"
+
+	"github.com/bantling/goiter"
 )
 
 var (
@@ -129,14 +131,23 @@ func (o OptionalInt) IfPresentOrElse(consumer func(int), f func()) {
 	}
 }
 
-// Empty returns true if this OptionalInt is not present
+// IsEmpty returns true if this OptionalInt is not present
 func (o OptionalInt) IsEmpty() bool {
 	return !o.present
 }
 
-// Present returns true if this OptionalInt is present
+// IsPresent returns true if this OptionalInt is present
 func (o OptionalInt) IsPresent() bool {
 	return o.present
+}
+
+// Iter returns an *Iter of one element containing the wrapped value if present, else an empty Iter
+func (o OptionalInt) Iter() *goiter.Iter {
+	if o.present {
+		return goiter.Of(o.value)
+	}
+
+	return goiter.Of()
 }
 
 // FlatMap operates like Map, except that the mapping function already returns an OptionalInt, which is returned as is.
@@ -227,7 +238,7 @@ func (o OptionalInt) MapToString(f func(int) string) OptionalString {
 // MustGet returns the unwrapped value and panics if it is not present
 func (o OptionalInt) MustGet() int {
 	if !o.present {
-		panic(notPresentError)
+		panic(errNotPresent)
 	}
 
 	return o.value
@@ -275,15 +286,6 @@ func (o *OptionalInt) Scan(src interface{}) error {
 	return nil
 }
 
-// String returns fmt.Sprintf("OptionalInt (%v)", wrapped value) if it is present, else "OptionalInt" if it is empty.
-func (o OptionalInt) String() string {
-	if o.present {
-		return fmt.Sprintf("OptionalInt (%v)", o.value)
-	}
-
-	return emptyIntString
-}
-
 // Value is the database/sql/driver/Valuer interface, allowing users to write an OptionalInt into a column.
 func (o OptionalInt) Value() (driver.Value, error) {
 	if !o.present {
@@ -291,4 +293,13 @@ func (o OptionalInt) Value() (driver.Value, error) {
 	}
 
 	return o.value, nil
+}
+
+// String returns fmt.Sprintf("OptionalInt (%v)", wrapped value) if it is present, else "OptionalInt" if it is empty.
+func (o OptionalInt) String() string {
+	if o.present {
+		return fmt.Sprintf("OptionalInt (%v)", o.value)
+	}
+
+	return emptyIntString
 }

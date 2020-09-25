@@ -33,12 +33,12 @@ func TestOptionalOfEmptyPresentGet(t *testing.T) {
 		opt.IfEmpty(func() { called = true })
 		assert.True(t, called)
 		called = false
-		opt.IfPresentOrElse(func(interface{}) { }, func() { called = true })
+		opt.IfPresentOrElse(func(interface{}) {}, func() { called = true })
 		assert.True(t, called)
 
 		func() {
 			defer func() {
-				assert.True(t, notPresentError == recover())
+				assert.True(t, errNotPresent == recover())
 			}()
 
 			opt.MustGet()
@@ -69,7 +69,7 @@ func TestOptionalOfEmptyPresentGet(t *testing.T) {
 	opt = Of("")
 	assert.Equal(t, "", opt.value)
 	assert.True(t, opt.present)
-	
+
 	// Test zero value
 	var zval Optional
 	assert.Nil(t, zval.value)
@@ -82,16 +82,28 @@ func TestOptionalOfEmptyPresentGet(t *testing.T) {
 	zval.IfEmpty(func() { called = true })
 	assert.True(t, called)
 	called = false
-	zval.IfPresentOrElse(func(interface{}) { }, func() { called = true })
+	zval.IfPresentOrElse(func(interface{}) {}, func() { called = true })
 	assert.True(t, called)
 	func() {
 		defer func() {
-			assert.True(t, notPresentError == recover())
+			assert.True(t, errNotPresent == recover())
 		}()
 
 		zval.MustGet()
 		assert.Fail(t, "Expected Panic")
 	}()
+}
+
+func TestOptionalIter(t *testing.T) {
+	var opt Optional
+	iter := opt.Iter()
+	assert.False(t, iter.Next())
+
+	opt = Of(1)
+	iter = opt.Iter()
+	assert.True(t, iter.Next())
+	assert.Equal(t, 1, iter.Value())
+	assert.False(t, iter.Next())
 }
 
 func TestOptionalEqual(t *testing.T) {
