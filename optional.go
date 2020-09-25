@@ -184,15 +184,17 @@ func (o Optional) FlatMap(f func(interface{}) Optional) Optional {
 
 // Map the wrapped value with the given mapping function, which may return a different type.
 // If this optional is not present, the function is not invoked and an empty Optional is returned.
-// If this optional is present and the map function returns a zero value, an empty Optional is returned.
+// If this optional is present and the map function returns a nil pointer value, an empty Optional is returned.
 // Otherwise, an Optional wrapping the mapped value is returned.
-// The mapping function result is determined to be zero by reflect.Value.IsZero().
 func (o Optional) Map(f func(interface{}) interface{}) Optional {
 	if o.present {
 		v := f(o.value)
-		if !reflect.ValueOf(v).IsZero() {
-			return Of(v)
+		rv := reflect.ValueOf(v)
+		if (rv.Kind() == reflect.Ptr) && (rv.IsNil()) {
+			return Optional{}
 		}
+
+		return Of(v)
 	}
 
 	return Optional{}
@@ -268,8 +270,6 @@ func (o Optional) MustGet() interface{} {
 }
 
 // OrElse returns the wrapped value if it is present, else it returns the given value.
-// The given value may be a zero value.
-// The given value should be the same type.
 func (o Optional) OrElse(value interface{}) interface{} {
 	if o.present {
 		return o.value
@@ -279,8 +279,6 @@ func (o Optional) OrElse(value interface{}) interface{} {
 }
 
 // OrElseGet returns the wrapped value if it is present, else it returns the result of the given function.
-// The function result may be a zero value.
-// The function result should be the same type.
 func (o Optional) OrElseGet(supplier func() interface{}) interface{} {
 	if o.present {
 		return o.value
