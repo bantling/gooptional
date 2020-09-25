@@ -213,6 +213,17 @@ func TestOptionalMapFloatIntString(t *testing.T) {
 	assert.True(t, Of().Map(too).IsEmpty())
 	assert.Equal(t, 2, Of(1).Map(too).MustGet())
 
+	tonp := func(val interface{}) interface{} {
+		return nil
+	}
+	assert.True(t, Of(1).Map(tonp).IsEmpty())
+
+	toz := func(val interface{}) interface{} {
+		return 0
+	}
+	assert.False(t, Of(1).Map(toz).IsEmpty())
+	assert.True(t, Of(1).Map(toz, true).IsEmpty())
+
 	tof := func(val interface{}) float64 {
 		return float64(val.(int) + 1)
 	}

@@ -183,14 +183,21 @@ func (o Optional) FlatMap(f func(interface{}) Optional) Optional {
 }
 
 // Map the wrapped value with the given mapping function, which may return a different type.
-// If this optional is not present, the function is not invoked and an empty Optional is returned.
-// If this optional is present and the map function returns a nil pointer value, an empty Optional is returned.
+// An empty Optional is returned if any of the following is true:
+// - This Optional is not present. In this case, the mapping function is not invoked.
+// - The mapping function returns a nil value.
+// - The mapping function returns a zero value, and zeroValIsEmpty is true. By default, zeroValIsEmpty is false.
 // Otherwise, an Optional wrapping the mapped value is returned.
-func (o Optional) Map(f func(interface{}) interface{}) Optional {
+func (o Optional) Map(f func(interface{}) interface{}, zeroValIsEmpty ...bool) Optional {
 	if o.present {
 		v := f(o.value)
 		rv := reflect.ValueOf(v)
-		if (rv.Kind() == reflect.Ptr) && (rv.IsNil()) {
+
+		if IsNil(v) {
+			return Optional{}
+		}
+
+		if (len(zeroValIsEmpty) > 0) && zeroValIsEmpty[0] && rv.IsZero() {
 			return Optional{}
 		}
 
