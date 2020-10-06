@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/bantling/goiter"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -95,12 +96,10 @@ func TestOptionalOfEmptyPresentGet(t *testing.T) {
 }
 
 func TestOptionalIter(t *testing.T) {
-	var opt Optional
-	iter := opt.Iter()
-	assert.False(t, iter.Next())
-
-	opt = Of(1)
-	iter = opt.Iter()
+	var (
+		iterable goiter.Iterable = Of(1)
+		iter                     = iterable.Iter()
+	)
 	assert.True(t, iter.Next())
 	assert.Equal(t, 1, iter.Value())
 	assert.False(t, iter.Next())
