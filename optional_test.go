@@ -97,7 +97,8 @@ func TestOptionalOfEmptyPresentGet(t *testing.T) {
 
 func TestOptionalIter(t *testing.T) {
 	var (
-		iterable goiter.Iterable = Of(1)
+		opt      Optional        = Of(1)
+		iterable goiter.Iterable = opt
 		iter                     = iterable.Iter()
 	)
 	assert.True(t, iter.Next())
