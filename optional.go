@@ -30,11 +30,7 @@ func IsNil(value interface{}) bool {
 		return false
 	}
 
-	if (value == nil) || (fmt.Sprintf("%p", value) == "0x0") {
-		return true
-	}
-
-	return false
+	return (value == nil) || (fmt.Sprintf("%p", value) == "0x0")
 }
 
 // Of returns an Optional.
@@ -131,6 +127,24 @@ func (o Optional) Get() (interface{}, bool) {
 	return o.value, o.present
 }
 
+// MustGet returns the unwrapped value and panics if it is not present
+func (o Optional) MustGet() interface{} {
+	if !o.present {
+		panic(errNotPresent)
+	}
+
+	return o.value
+}
+
+// Iter returns an *Iter of one element containing the wrapped value if present, else an empty Iter
+func (o Optional) Iter() *goiter.Iter {
+	if o.present {
+		return goiter.Of(o.value)
+	}
+
+	return goiter.Of()
+}
+
 // IfPresent executes the consumer function with the wrapped value only if the value is present.
 func (o Optional) IfPresent(consumer func(interface{})) {
 	if o.present {
@@ -164,24 +178,6 @@ func (o Optional) IsPresent() bool {
 	return o.present
 }
 
-// Iter returns an *Iter of one element containing the wrapped value if present, else an empty Iter
-func (o Optional) Iter() *goiter.Iter {
-	if o.present {
-		return goiter.Of(o.value)
-	}
-
-	return goiter.Of()
-}
-
-// FlatMap operates like Map, except that the mapping function already returns an Optional, which is returned as is.
-func (o Optional) FlatMap(f func(interface{}) Optional) Optional {
-	if o.present {
-		return f(o.value)
-	}
-
-	return Optional{}
-}
-
 // Map the wrapped value with the given mapping function, which may return a different type.
 // An empty Optional is returned if any of the following is true:
 // - This Optional is not present. In this case, the mapping function is not invoked.
@@ -207,73 +203,13 @@ func (o Optional) Map(f func(interface{}) interface{}, zeroValIsEmpty ...bool) O
 	return Optional{}
 }
 
-// FlatMapToFloat operates like MapToFloat, except that the mapping function already returns an OptionalFloat, which is returned as is.
-func (o Optional) FlatMapToFloat(f func(interface{}) OptionalFloat) OptionalFloat {
+// FlatMap operates like Map, except that the mapping function already returns an Optional, which is returned as is.
+func (o Optional) FlatMap(f func(interface{}) Optional) Optional {
 	if o.present {
 		return f(o.value)
 	}
 
-	return OptionalFloat{}
-}
-
-// MapToFloat maps the wrapped value to a float64 with the given mapping function.
-// If this optional is not present, the function is not invoked and an empty OptionalFloat is returned.
-// Otherwise, an OptionalFloat wrapping the mapped value is returned.
-func (o Optional) MapToFloat(f func(interface{}) float64) OptionalFloat {
-	if o.present {
-		return OfFloat(f(o.value))
-	}
-
-	return OptionalFloat{}
-}
-
-// FlatMapToInt operates like MapToInt, except that the mapping function already returns an OptionalInt, which is returned as is.
-func (o Optional) FlatMapToInt(f func(interface{}) OptionalInt) OptionalInt {
-	if o.present {
-		return f(o.value)
-	}
-
-	return OptionalInt{}
-}
-
-// MapToInt the wrapped value to an int with the given mapping function.
-// If this optional is not present, the function is not invoked and an empty OptionalInt is returned.
-// Otherwise, an OptionalInt wrapping the mapped value is returned.
-func (o Optional) MapToInt(f func(interface{}) int) OptionalInt {
-	if o.present {
-		return OfInt(f(o.value))
-	}
-
-	return OptionalInt{}
-}
-
-// FlatMapToString operates like MapToString, except that the mapping function already returns an OptionalString, which is returned as is.
-func (o Optional) FlatMapToString(f func(interface{}) OptionalString) OptionalString {
-	if o.present {
-		return f(o.value)
-	}
-
-	return OptionalString{}
-}
-
-// MapToString the wrapped value to a string with the given mapping function.
-// If this optional is not present, the function is not invoked and an empty OptionalString is returned.
-// Otherwise, an OptionalString wrapping the mapped value is returned.
-func (o Optional) MapToString(f func(interface{}) string) OptionalString {
-	if o.present {
-		return OfString(f(o.value))
-	}
-
-	return OptionalString{}
-}
-
-// MustGet returns the unwrapped value and panics if it is not present
-func (o Optional) MustGet() interface{} {
-	if !o.present {
-		panic(errNotPresent)
-	}
-
-	return o.value
+	return Optional{}
 }
 
 // OrElse returns the wrapped value if it is present, else it returns the given value.

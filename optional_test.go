@@ -3,7 +3,6 @@ package gooptional
 import (
 	"database/sql"
 	"fmt"
-	"strconv"
 	"testing"
 
 	"github.com/bantling/goiter"
@@ -95,17 +94,6 @@ func TestOptionalOfEmptyPresentGet(t *testing.T) {
 	}()
 }
 
-func TestOptionalIter(t *testing.T) {
-	var (
-		opt      Optional        = Of(1)
-		iterable goiter.Iterable = opt
-		iter                     = iterable.Iter()
-	)
-	assert.True(t, iter.Next())
-	assert.Equal(t, 1, iter.Value())
-	assert.False(t, iter.Next())
-}
-
 func TestOptionalEqual(t *testing.T) {
 	// Not present optional == not present optional
 	assert.True(t, Of().Equal(Of()))
@@ -180,33 +168,18 @@ func TestOptionalFilterNot(t *testing.T) {
 	assert.True(t, Of().FilterNot(func(interface{}) bool { return false }).IsEmpty())
 }
 
-func TestOptionalFlatMapFloatIntString(t *testing.T) {
-	too := func(val interface{}) Optional {
-		return Of(val.(int) + 1)
-	}
-	assert.True(t, Of().FlatMap(too).IsEmpty())
-	assert.Equal(t, 2, Of(1).FlatMap(too).MustGet())
-
-	tof := func(val interface{}) OptionalFloat {
-		return OfFloat(float64(val.(int) + 1))
-	}
-	assert.True(t, Of().FlatMapToFloat(tof).IsEmpty())
-	assert.Equal(t, 2.0, Of(1).FlatMapToFloat(tof).MustGet())
-
-	toi := func(val interface{}) OptionalInt {
-		return OfInt(val.(int) + 1)
-	}
-	assert.True(t, Of().FlatMapToInt(toi).IsEmpty())
-	assert.Equal(t, 2, Of(1).FlatMapToInt(toi).MustGet())
-
-	tos := func(val interface{}) OptionalString {
-		return OfString(strconv.Itoa(val.(int) + 1))
-	}
-	assert.True(t, Of().FlatMapToString(tos).IsEmpty())
-	assert.Equal(t, "2", Of(1).FlatMapToString(tos).MustGet())
+func TestOptionalIter(t *testing.T) {
+	var (
+		opt      Optional        = Of(1)
+		iterable goiter.Iterable = opt
+		iter                     = iterable.Iter()
+	)
+	assert.True(t, iter.Next())
+	assert.Equal(t, 1, iter.Value())
+	assert.False(t, iter.Next())
 }
 
-func TestOptionalMapFloatIntString(t *testing.T) {
+func TestOptionalMap(t *testing.T) {
 	too := func(val interface{}) interface{} {
 		return val.(int) + 1
 	}
@@ -223,24 +196,24 @@ func TestOptionalMapFloatIntString(t *testing.T) {
 	}
 	assert.False(t, Of(1).Map(toz).IsEmpty())
 	assert.True(t, Of(1).Map(toz, true).IsEmpty())
+}
 
-	tof := func(val interface{}) float64 {
-		return float64(val.(int) + 1)
+func TestOptionalFlatMap(t *testing.T) {
+	too := func(val interface{}) Optional {
+		return Of(val.(int) + 1)
 	}
-	assert.True(t, Of().MapToFloat(tof).IsEmpty())
-	assert.Equal(t, 2.0, Of(1).MapToFloat(tof).MustGet())
+	assert.True(t, Of().FlatMap(too).IsEmpty())
+	assert.Equal(t, 2, Of(1).FlatMap(too).MustGet())
 
-	toi := func(val interface{}) int {
-		return val.(int) + 1
+	tonp := func(val interface{}) Optional {
+		return Of()
 	}
-	assert.True(t, Of().MapToInt(toi).IsEmpty())
-	assert.Equal(t, 2, Of(1).MapToInt(toi).MustGet())
+	assert.True(t, Of(1).FlatMap(tonp).IsEmpty())
 
-	tos := func(val interface{}) string {
-		return strconv.Itoa(val.(int) + 1)
+	toz := func(val interface{}) Optional {
+		return Of()
 	}
-	assert.True(t, Of().MapToString(tos).IsEmpty())
-	assert.Equal(t, "2", Of(1).MapToString(tos).MustGet())
+	assert.True(t, Of(1).FlatMap(toz).IsEmpty())
 }
 
 func TestOptionalOrElseGetPanic(t *testing.T) {
@@ -274,6 +247,16 @@ func TestOptionalScan(t *testing.T) {
 	assert.NotNil(t, &sc)
 }
 
+func TestOptionalValue(t *testing.T) {
+	val, err := Of().Value()
+	assert.Nil(t, val)
+	assert.Nil(t, err)
+
+	val, err = Of(0).Value()
+	assert.Equal(t, 0, val)
+	assert.Nil(t, err)
+}
+
 type OptionalT int
 
 func (t OptionalT) String() string {
@@ -286,12 +269,6 @@ func TestOptionalString(t *testing.T) {
 	assert.Equal(t, "Optional (2)", fmt.Sprintf("%s", Of((OptionalT)(1))))
 }
 
-func TestOptionalValue(t *testing.T) {
-	val, err := Of().Value()
-	assert.Nil(t, val)
-	assert.Nil(t, err)
-
-	val, err = Of(0).Value()
-	assert.Equal(t, 0, val)
-	assert.Nil(t, err)
+func TestSpecialization(t *testing.T) {
+	assert.True(t, Of(true).Iter().NextBoolValue())
 }

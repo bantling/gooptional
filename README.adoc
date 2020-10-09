@@ -4,27 +4,16 @@
 
 Implementation of optional similar to Java.
 
-== Optional types
-
-- Optional wraps a value of any type
-- OptionalInt wraps an int
-- OptionalFloat wraps a float64
-- OptionalString wraps a string 
-
 == Main differences from Java
 
 - Single constructor for both initial cases of empty and with a value 
 - Contains negative methods (NotEqual, NotEqualValue, FilterNot)
 - Compares against another Optional (Equal/NotEqual) or against another value (EqualValue/NotEqualValue)
-- Implements goiter.IterSupplier, provides an iterator of zero or one elements. This can be used with gostream.
+- Implements goiter.Iterable, provides an iterator of zero or one elements
+- Since goiter.Iter has specialization methods such as BoolValue and NextBoolValue, there is no need for specialized classes like Java OptionalInt 
 - Has both MapTo{float, int, string} and FlatMapTo{float,int,string}
 - Implements database/sql/driver Scanner and Valuer interfaces for compatibility with values read from/written to a column
 
 == Constructors
 
-- Of(...interface{}) returns an Optional
-- OfFloat(...float64) returns an OptionalFloat
-- OfInt(...int) returns an OpitonalInt
-- OfString(...string) returns an OptionalString
-
-Each constructor expects zero or one arguments, and will ignore any extra arguments passed.
+Of(...interface{}) returns an Optional that is empty if no args are passed, or present with the first arg passed.
