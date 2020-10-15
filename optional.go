@@ -8,6 +8,119 @@ import (
 	"github.com/bantling/goiter"
 )
 
+// FilterFunc adapts any func that accepts a single arg and returns bool into a func(interface{}) bool suitable for the Filter methods.
+// Panics if f is not a func that accepts a single arg and returns bool.
+func FilterFunc(f interface{}) func(interface{}) bool {
+	var (
+		val = reflect.ValueOf(f)
+		typ = val.Type()
+	)
+
+	if typ.Kind() != reflect.Func {
+		panic("f must be a function")
+	}
+
+	if (typ.NumIn() != 1) || (typ.NumOut() != 1) {
+		panic("f must accept a single arg and return bool")
+	}
+
+	if typ.Out(0).Kind() != reflect.Bool {
+		panic("f must accept a single arg and return bool")
+	}
+
+	return func(arg interface{}) bool {
+		return val.Call([]reflect.Value{reflect.ValueOf(arg)})[0].Bool()
+	}
+}
+
+// ConsumerFunc adapts any func that accepts a single arg and returns nothing into a func(interface{}) suitable for the IfPresent methods.
+// Panics if f is not a func that accepts a single arg and returns nothing.
+func ConsumerFunc(f interface{}) func(interface{}) {
+	var (
+		val = reflect.ValueOf(f)
+		typ = val.Type()
+	)
+
+	if typ.Kind() != reflect.Func {
+		panic("f must be a function")
+	}
+
+	if (typ.NumIn() != 1) || (typ.NumOut() != 0) {
+		panic("f must accept a single arg and returns nothing")
+	}
+
+	return func(arg interface{}) {
+		val.Call([]reflect.Value{reflect.ValueOf(arg)})
+	}
+}
+
+// MapFunc adapts any func that accepts a single arg and returns a single value into a func(interface{}) interface{} suitable for the Map method.
+// Panics if f is not a func that accepts a single arg and returns a single value.
+func MapFunc(f interface{}) func(interface{}) interface{} {
+	var (
+		val = reflect.ValueOf(f)
+		typ = val.Type()
+	)
+
+	if typ.Kind() != reflect.Func {
+		panic("f must be a function")
+	}
+
+	if (typ.NumIn() != 1) || (typ.NumOut() != 1) {
+		panic("f must accept a single arg and return a single value")
+	}
+
+	return func(arg interface{}) interface{} {
+		return val.Call([]reflect.Value{reflect.ValueOf(arg)})[0].Interface()
+	}
+}
+
+// FlatMapFunc adapts any func that accepts a single arg and returns an Optional into a func(interface{}) Optional suitable for the FlatMap method.
+// Panics if f is not a func that accepts a single arg and returns an Optional.
+func FlatMapFunc(f interface{}) func(interface{}) Optional {
+	var (
+		val = reflect.ValueOf(f)
+		typ = val.Type()
+	)
+
+	if typ.Kind() != reflect.Func {
+		panic("f must be a function")
+	}
+
+	if (typ.NumIn() != 1) || (typ.NumOut() != 1) {
+		panic("f must accept a single arg and return an optional")
+	}
+
+	if typ.Out(0) != reflect.TypeOf((*Optional)(nil)).Elem() {
+		panic("f must accept a single arg and return an optional")
+	}
+
+	return func(arg interface{}) Optional {
+		return val.Call([]reflect.Value{reflect.ValueOf(arg)})[0].Interface().(Optional)
+	}
+}
+
+// SupplierFunc adapts any func that accepts nothing and returns a a single value into a func() interface{} suitable for the OrElseGet method.
+// Panics if f is not a func that accepts nothing and returns a single value.
+func SupplierFunc(f interface{}) func() interface{} {
+	var (
+		val = reflect.ValueOf(f)
+		typ = val.Type()
+	)
+
+	if typ.Kind() != reflect.Func {
+		panic("f must be a function")
+	}
+
+	if (typ.NumIn() != 0) || (typ.NumOut() != 1) {
+		panic("f must accept nothing and return a single value")
+	}
+
+	return func() interface{} {
+		return val.Call([]reflect.Value{})[0].Interface()
+	}
+}
+
 // Optional is a mostly immutable generic wrapper for any kind of value with a present flag.
 // The only mutable operation is the implementation of the sql.Scanner interface.
 // The zero value is ready to use.
@@ -136,7 +249,8 @@ func (o Optional) MustGet() interface{} {
 	return o.value
 }
 
-// Iter returns an *Iter of one element containing the wrapped value if present, else an empty Iter
+// Iter returns an *Iter of one element containing the wrapped value if present, else an empty Iter.
+// Use the Iter to call methods like IntValue() and NextIntValue() that return builtin types.
 func (o Optional) Iter() *goiter.Iter {
 	if o.present {
 		return goiter.Of(o.value)

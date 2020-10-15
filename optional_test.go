@@ -55,10 +55,16 @@ func TestOptionalOfEmptyPresentGet(t *testing.T) {
 	opt.IfPresent(func(v interface{}) { val = v })
 	assert.Equal(t, 0, val)
 	val = 1
+	opt.IfPresent(ConsumerFunc(func(v int) { val = v }))
+	assert.Equal(t, 0, val)
+	val = 1
 	opt.IfEmpty(func() { val = 0 })
 	assert.Equal(t, 1, val)
 	val = 1
-	opt.IfPresentOrElse(func(v interface{}) { val = 2 }, func() { val = 3 })
+	opt.IfPresentOrElse(func(v interface{}) { val = v.(int) + 2 }, func() { val = 3 })
+	assert.Equal(t, 2, val)
+	val = 1
+	opt.IfPresentOrElse(ConsumerFunc(func(v int) { val = v + 2 }), func() { val = 3 })
 	assert.Equal(t, 2, val)
 
 	val, valid = opt.Get()
@@ -156,6 +162,7 @@ func TestOptionalFilter(t *testing.T) {
 	opt := Of(1)
 	assert.True(t, opt == opt.Filter(func(val interface{}) bool { return true }))
 	assert.True(t, opt.Filter(func(interface{}) bool { return false }).IsEmpty())
+	assert.True(t, opt == opt.Filter(FilterFunc(func(val int) bool { return true })))
 
 	assert.True(t, Of().Filter(func(interface{}) bool { return true }).IsEmpty())
 }
@@ -164,6 +171,7 @@ func TestOptionalFilterNot(t *testing.T) {
 	opt := Of(1)
 	assert.True(t, opt == opt.FilterNot(func(val interface{}) bool { return false }))
 	assert.True(t, opt.FilterNot(func(interface{}) bool { return true }).IsEmpty())
+	assert.True(t, opt == opt.FilterNot(FilterFunc(func(val int) bool { return false })))
 
 	assert.True(t, Of().FilterNot(func(interface{}) bool { return false }).IsEmpty())
 }
@@ -186,6 +194,12 @@ func TestOptionalMap(t *testing.T) {
 	assert.True(t, Of().Map(too).IsEmpty())
 	assert.Equal(t, 2, Of(1).Map(too).MustGet())
 
+	tooint := MapFunc(func(val int) int {
+		return val + 1
+	})
+	assert.True(t, Of().Map(tooint).IsEmpty())
+	assert.Equal(t, 2, Of(1).Map(tooint).MustGet())
+
 	tonp := func(val interface{}) interface{} {
 		return nil
 	}
@@ -205,6 +219,12 @@ func TestOptionalFlatMap(t *testing.T) {
 	assert.True(t, Of().FlatMap(too).IsEmpty())
 	assert.Equal(t, 2, Of(1).FlatMap(too).MustGet())
 
+	tooopt := FlatMapFunc(func(val interface{}) Optional {
+		return Of(val.(int) + 1)
+	})
+	assert.True(t, Of().FlatMap(tooopt).IsEmpty())
+	assert.Equal(t, 2, Of(1).FlatMap(tooopt).MustGet())
+
 	tonp := func(val interface{}) Optional {
 		return Of()
 	}
@@ -220,6 +240,10 @@ func TestOptionalOrElseGetPanic(t *testing.T) {
 	f := func() interface{} { return 2 }
 	assert.Equal(t, 1, Of().OrElse(1))
 	assert.Equal(t, 2, Of().OrElseGet(f))
+
+	ft := SupplierFunc(func() int { return 2 })
+	assert.Equal(t, 1, Of().OrElse(1))
+	assert.Equal(t, 2, Of().OrElseGet(ft))
 
 	err := fmt.Errorf("")
 	errf := func() error { return err }
