@@ -8,6 +8,16 @@ import (
 	"github.com/bantling/goiter"
 )
 
+// ZeroValueIsPresentFlags is a pair of flags indicating whether or not a zero value should be considered present
+type ZeroValueIsPresentFlags uint
+
+const (
+	// ZeroValueIsPresent is the default, and indicates a zero value is considered present
+	ZeroValueIsPresent ZeroValueIsPresentFlags = iota
+	// ZeroValueIsEmpty indicates a zero value is considered empty
+	ZeroValueIsEmpty
+)
+
 // FilterFunc adapts any func that accepts a single arg and returns bool into a func(interface{}) bool suitable for the Filter methods.
 // Panics if f is not a func that accepts a single arg and returns bool.
 func FilterFunc(f interface{}) func(interface{}) bool {
@@ -296,9 +306,9 @@ func (o Optional) IsPresent() bool {
 // An empty Optional is returned if any of the following is true:
 // - This Optional is not present. In this case, the mapping function is not invoked.
 // - The mapping function returns a nil value.
-// - The mapping function returns a zero value, and zeroValIsEmpty is true. By default, zeroValIsEmpty is false.
+// - The mapping function returns a zero value, and zeroValIsPresent == ZeroValueIsEmpty. By default, zeroValIsPresent == ZeroValueIsPresent.
 // Otherwise, an Optional wrapping the mapped value is returned.
-func (o Optional) Map(f func(interface{}) interface{}, zeroValIsEmpty ...bool) Optional {
+func (o Optional) Map(f func(interface{}) interface{}, zeroValIsPresent ...ZeroValueIsPresentFlags) Optional {
 	if o.present {
 		v := f(o.value)
 		rv := reflect.ValueOf(v)
@@ -307,7 +317,7 @@ func (o Optional) Map(f func(interface{}) interface{}, zeroValIsEmpty ...bool) O
 			return Optional{}
 		}
 
-		if (len(zeroValIsEmpty) > 0) && zeroValIsEmpty[0] && rv.IsZero() {
+		if (len(zeroValIsPresent) > 0) && (zeroValIsPresent[0] == ZeroValueIsEmpty) && rv.IsZero() {
 			return Optional{}
 		}
 

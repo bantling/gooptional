@@ -209,7 +209,7 @@ func TestOptionalMap(t *testing.T) {
 		return 0
 	}
 	assert.False(t, Of(1).Map(toz).IsEmpty())
-	assert.True(t, Of(1).Map(toz, true).IsEmpty())
+	assert.True(t, Of(1).Map(toz, ZeroValueIsEmpty).IsEmpty())
 }
 
 func TestOptionalFlatMap(t *testing.T) {
