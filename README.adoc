@@ -6,9 +6,8 @@ Implementation of optional similar to Java.
 
 == Main differences from Java
 
-- Single constructor for both initial cases of empty and with a value 
-- Contains negative methods (NotEqual, NotEqualValue, FilterNot)
-- Compares against another Optional (Equal/NotEqual) or against another value (EqualValue/NotEqualValue)
+- Single constructor for both initial cases of empty and with a value
+- Comparisons made by Filter, where gofuncs provides conjunction, disjunction, negation, and equality.
 - Implements goiter.Iterable, provides an iterator of zero or one elements
 - Since goiter.Iter has specialization methods such as IntValue and NextIntValue, there is no need for specialized classes like Java OptionalInt
 - Implements database/sql/driver Scanner and Valuer interfaces for compatibility with values read from/written to a column
