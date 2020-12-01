@@ -36,19 +36,8 @@ var (
 // If no value or a nil value is provided, a new empty Optional is returned.
 // Otherwise a new Optional that wraps the value is returned.
 func Of(value ...interface{}) Optional {
-	if len(value) == 0 {
-		return Optional{}
-	}
-
-	v := value[0]
-	if gofuncs.IsNil(v) {
-		return Optional{}
-	}
-
-	return Optional{
-		value:   v,
-		present: true,
-	}
+	v := gofuncs.IndexOf(value, 0)
+	return gofuncs.Ternary(gofuncs.IsNil(v), Optional{}, Optional{value: v, present: true}).(Optional)
 }
 
 // Get returns the wrapped value and whether or not it is present.
@@ -57,41 +46,25 @@ func (o Optional) Get() (interface{}, bool) {
 	return o.value, o.present
 }
 
-// MustGet returns the unwrapped value and panics if it is not present
+// MustGet returns the unwrapped value and panics if it is not present.
 func (o Optional) MustGet() interface{} {
-	if !o.present {
-		panic(errNotPresent)
-	}
-
-	return o.value
+	return gofuncs.PanicVBM(o.value, o.present, errNotPresent)
 }
 
 // OrElse returns the wrapped value if it is present, else it returns the given value.
 func (o Optional) OrElse(value interface{}) interface{} {
-	if !o.present {
-		return value
-	}
-
-	return o.value
+	return gofuncs.Ternary(o.present, o.value, value)
 }
 
 // OrElseGet returns the wrapped value if it is present, else it returns the result of the given function.
 // supplier must be a func of no args that returns a single value to be wrapped.
 func (o Optional) OrElseGet(supplier interface{}) interface{} {
-	if !o.present {
-		return gofuncs.Supplier(supplier)()
-	}
-
-	return o.value
+	return gofuncs.TernaryOf(o.present, o.MustGet, supplier)
 }
 
 // OrElsePanic returns the wrapped value if it is present, else it panics with the result of the given function
 func (o Optional) OrElsePanic(f func() string) interface{} {
-	if !o.present {
-		panic(f())
-	}
-
-	return o.value
+	return gofuncs.PanicVBM(o.value, o.present, f())
 }
 
 // IsEmpty returns true if this Optional is not present
@@ -104,18 +77,18 @@ func (o Optional) IsPresent() bool {
 	return o.present
 }
 
+// IfEmpty executes the function only if the value is not present.
+func (o Optional) IfEmpty(f func()) {
+	if !o.present {
+		f()
+	}
+}
+
 // IfPresent executes the consumer function with the wrapped value only if the value is present.
 // consumer must be a func that receives a type the wrapped value can be converted into and has no return values.
 func (o Optional) IfPresent(consumer interface{}) {
 	if o.present {
 		gofuncs.Consumer(consumer)(o.value)
-	}
-}
-
-// IfEmpty executes the function only if the value is not present.
-func (o Optional) IfEmpty(f func()) {
-	if !o.present {
-		f()
 	}
 }
 
@@ -132,11 +105,7 @@ func (o Optional) IfPresentOrElse(consumer interface{}, f func()) {
 // Iter returns an *Iter of one element containing the wrapped value if present, else an empty Iter.
 // See Iter for typed methods that return builtin types.
 func (o Optional) Iter() *goiter.Iter {
-	if o.present {
-		return goiter.Of(o.value)
-	}
-
-	return goiter.Of()
+	return gofuncs.Ternary(o.present, goiter.Of(o.value), goiter.Of()).(*goiter.Iter)
 }
 
 // Filter applies the predicate to the value of this Optional.
@@ -145,11 +114,7 @@ func (o Optional) Iter() *goiter.Iter {
 // The predicate must be a func(any) bool, where the arg is compatible with the value of this Optional.
 // Use gofuncs for predicate conjunctions, disjuctions, negations, etc.
 func (o Optional) Filter(predicate interface{}) Optional {
-	if o.present && gofuncs.Filter(predicate)(o.value) {
-		return o
-	}
-
-	return Optional{}
+	return gofuncs.Ternary(o.present && gofuncs.Filter(predicate)(o.value), o, Optional{}).(Optional)
 }
 
 // Map the wrapped value with the given mapping function, which may return a different type.
@@ -201,18 +166,14 @@ func (o *Optional) Scan(src interface{}) error {
 // If a present optional does not contain an allowed type, the operation will fail.
 // It is up to the caller to ensure the correct type is being written.
 func (o Optional) Value() (driver.Value, error) {
-	if !o.present {
-		return nil, nil
+	if o.present {
+		return o.value, nil
 	}
 
-	return o.value, nil
+	return nil, nil
 }
 
 // String returns fmt.Sprintf("Optional (%v)", wrapped value) if present, else "Optional" if it is empty.
 func (o Optional) String() string {
-	if !o.present {
-		return emptyString
-	}
-
-	return fmt.Sprintf("Optional (%v)", o.value)
+	return gofuncs.Ternary(o.present, fmt.Sprintf("Optional (%v)", o.value), emptyString).(string)
 }

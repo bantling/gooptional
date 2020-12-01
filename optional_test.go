@@ -118,6 +118,11 @@ func TestOptionalIter(t *testing.T) {
 	assert.True(t, iter.Next())
 	assert.Equal(t, 1, iter.Value())
 	assert.False(t, iter.Next())
+
+	opt = Of()
+	iterable = opt
+	iter = iterable.Iter()
+	assert.False(t, iter.Next())
 }
 
 func TestOptionalMap(t *testing.T) {
