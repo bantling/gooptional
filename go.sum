@@ -1,5 +1,5 @@
-github.com/bantling/gofuncs v1.8.0 h1:TtXfgq0M04oQob+6GwrftnFGz29akg8mTIHjyVbOobQ=
-github.com/bantling/gofuncs v1.8.0/go.mod h1:gBPTLVGa3qCSgT9w+0F81/S/X56G8n6IZnpv04PsyOQ=
+github.com/bantling/gofuncs v1.11.0 h1:9O1P2heUj6z1D6V046S+i+izqvyUjj7dqr7pMbRFmWw=
+github.com/bantling/gofuncs v1.11.0/go.mod h1:gBPTLVGa3qCSgT9w+0F81/S/X56G8n6IZnpv04PsyOQ=
 github.com/bantling/goiter v1.14.0 h1:ZpXiYwkRDtzisKvZGnR78oMVl9REpFeojtp16QXROto=
 github.com/bantling/goiter v1.14.0/go.mod h1:POJFHw0tUGDWsROcbtcqRdYpq6RSEAL9rxa7Q94Xj+U=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
